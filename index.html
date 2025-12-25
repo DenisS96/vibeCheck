@@ -4,15 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VibeCheck - Samen Beslissen & Besparen</title>
-    <!-- Tailwind CSS voor styling -->
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- React & Babel CDNs -->
+    <!-- React & Babel -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
     <style>
         @keyframes loading { from { width: 0%; } to { width: 100%; } }
-        .animate-loading { animation: loading 3s linear; }
+        .animate-loading { animation: loading 5s linear; }
         body { -webkit-tap-highlight-color: transparent; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: #f8fafc; }
         .no-scroll { overflow: hidden; height: 100vh; }
         .vibe-card { transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
@@ -23,12 +24,11 @@
     <div id="root"></div>
 
     <script type="text/babel" data-type="module">
-        // Firebase Imports van CDN
+        // Firebase CDN Imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
         import { getFirestore, doc, setDoc, onSnapshot, updateDoc, arrayUnion, getDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
         import { getAuth, signInAnonymously, onAuthStateChanged, linkWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
 
-        // Firebase Configuratie
         const firebaseConfig = {
             apiKey: "AIzaSyAZPIbmsy48MjRGElG7BpNxyiR9ydlvl-k",
             authDomain: "vibecheck-4f630.firebaseapp.com",
@@ -44,15 +44,11 @@
         const db = getFirestore(app);
         const appId = "vibecheck-production";
 
-        // AD CONFIGURATIE
-        const ADSENSE_PUB_ID = "pub-3621501443462364";
-
-        // API KONFIGURATIE
         const TMDB_BEARER_TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIxYWYzYWIzYzk1NTk0MmM5YjA3ZmQyYmU5NGFhYjk1MCIsIm5iZiI6MTc2NjY2MjkxOC4wNDQsInN1YiI6IjY5NGQyMzA2YzQxZDgxZDE5NjA3MjgzZSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.nGJ_aApJYY2CMY7BdTubYCjXxsYYZOt4_2LHiXgEUJc";
 
-        const { useState, useEffect, useMemo } = React;
+        const { useState, useEffect } = React;
 
-        // Inline Icon Component om React Error #130 te voorkomen
+        // Iconenset om fouten te voorkomen
         const Icon = ({ name, size = 24, className = "", fill = "none", strokeWidth = 2 }) => {
             const icons = {
                 heart: <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.505 4.046 3 5.5L12 21l7-7z" />,
@@ -62,34 +58,18 @@
                 wallet: <><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4" /><path d="M3 5v14a2 2 0 0 0 2 2h16v-5" /><path d="M18 12a2 2 0 0 0 0 4h4v-4Z" /></>,
                 coins: <><circle cx="8" cy="8" r="6" /><circle cx="16" cy="16" r="6" /><path d="M12 12c0-3 2.5-5.5 5.5-5.5" /><path d="M6.5 17.5c3 0 5.5-2.5 5.5-5.5" /></>,
                 play: <path d="m6 3 14 9-14 9V3z" />,
-                arrow: <path d="m9 18 6-6-6-6" />,
+                chevronRight: <polyline points="9 18 15 12 9 6" />,
                 ticket: <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z" />,
                 shield: <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />,
                 lock: <><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></>,
                 info: <><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></>,
-                scale: <><path d="m16 16 3-8 3 8c-.87.62-1.9.87-3 .87s-2.13-.25-3-.87Z" /><path d="m2 16 3-8 3 8c-.87.62-1.9.87-3 .87s-2.13-.25-3-.87Z" /><path d="M7 21h10" /><path d="M12 3v18" /><path d="M3 7h18" /></>,
                 trash: <><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /></>,
                 film: <><rect width="18" height="18" x="3" y="3" rx="2" /><path d="M7 3v18" /><path d="M17 3v18" /><path d="M3 7h4" /><path d="M3 12h4" /><path d="M3 17h4" /><path d="M17 7h4" /><path d="M17 12h4" /><path d="M17 17h4" /></>,
                 check: <path d="M20 6 9 17l-5-5" />,
-                award: <><circle cx="12" cy="8" r="6" /><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11" /></>,
-                login: <><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" /><polyline points="10 17 15 12 10 7" /><line x1="15" x2="3" y1="12" y2="12" /></>,
-                share: <><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" /><polyline points="16 6 12 2 8 6" /><line x1="12" x2="12" y1="2" y2="15" /></>,
-                loader: <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83" />
+                award: <><circle cx="12" cy="8" r="6" /><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11" /></>
             };
-
             return (
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width={size}
-                    height={size}
-                    viewBox="0 0 24 24"
-                    fill={fill}
-                    stroke="currentColor"
-                    strokeWidth={strokeWidth}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className={className}
-                >
+                <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill={fill} stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}>
                     {icons[name] || null}
                 </svg>
             );
@@ -114,7 +94,7 @@
                         setUser(u);
                         setIsAnonymous(u.isAnonymous);
                     } else {
-                        signInAnonymously(auth).catch(err => console.error("Anonieme login mislukt:", err));
+                        signInAnonymously(auth).catch(err => console.error("Login mislukt:", err));
                     }
                 });
                 return () => unsubscribeAuth();
@@ -130,7 +110,8 @@
                         setBalance(data.balance || 0);
                         setVouchers(data.vouchers || []);
                     } else {
-                        setDoc(walletRef, { balance: 1.50, vouchers: [], createdAt: Date.now() });
+                        // STARTKAPITAAL OP €0.00
+                        setDoc(walletRef, { balance: 0.00, vouchers: [], createdAt: Date.now() });
                     }
                 }, (err) => console.error("Wallet sync fout:", err));
 
@@ -171,7 +152,7 @@
                         }));
                     } catch (err) {
                         setIsLoadingData(false);
-                        return [{ id: 'err', name: 'Fout bij laden', desc: 'Controleer je verbinding.', img: '' }];
+                        return [{ id: 'err', name: 'Laden mislukt', desc: 'Controleer je internet.', img: '' }];
                     }
                 }
                 return [
@@ -215,6 +196,7 @@
                 } else { setView('waiting'); }
             };
 
+            // VERBETERDE VIDEO-AD SIMULATIE
             const handleWatchAd = () => {
                 setIsWatchingAd(true);
                 setTimeout(async () => {
@@ -223,7 +205,7 @@
                     const currentBal = snap.exists() ? snap.data().balance : balance;
                     await updateDoc(walletRef, { balance: currentBal + 0.15 });
                     setIsWatchingAd(false);
-                }, 3000);
+                }, 5000); // Video duurt 5 seconden
             };
 
             const handleClaimVoucher = async () => {
@@ -235,13 +217,26 @@
                 setView('voucher_success');
             };
 
+            // VERBETERDE KOPPEL LOGICA
             const handleSecureAccount = async () => {
                 const provider = new GoogleAuthProvider();
+                provider.setCustomParameters({ prompt: 'select_account' });
+                
                 try {
                     await linkWithPopup(auth.currentUser, provider);
                     setIsAnonymous(false);
-                    alert("Account beveiligd!");
-                } catch (error) { console.error("Koppelen mislukt:", error); }
+                    alert("Account succesvol beveiligd!");
+                } catch (error) { 
+                    console.error("Fout bij koppelen:", error);
+                    if (error.code === 'auth/unauthorized-domain') {
+                        const host = window.location.hostname;
+                        alert("BEVEILIGINGSFOUT: Je moet '" + host + "' toevoegen aan je 'Authorized domains' in Firebase Console (Authentication > Settings).");
+                    } else if (error.code === 'auth/credential-already-in-use') {
+                        alert("Dit Google-account is al gekoppeld aan een andere VibeCheck-gebruiker.");
+                    } else {
+                        alert("Koppelen mislukt: " + error.message);
+                    }
+                }
             };
 
             if (!user) return <div className="h-screen flex items-center justify-center font-black text-indigo-600 animate-pulse text-2xl">VIBECHECK</div>;
@@ -249,7 +244,7 @@
             return (
                 <div className="min-h-screen bg-slate-50 font-sans text-slate-900 flex flex-col max-w-md mx-auto shadow-2xl relative border-x border-slate-200 overflow-hidden">
                     <header className="p-4 bg-white border-b flex justify-between items-center sticky top-0 z-30">
-                        <h1 onClick={() => setView('landing')} className="text-xl font-black text-indigo-600 cursor-pointer tracking-tighter uppercase italic">VIBECHECK</h1>
+                        <h1 onClick={() => setView('landing')} className="text-xl font-black text-indigo-600 cursor-pointer tracking-tighter uppercase italic leading-none">VIBECHECK</h1>
                         <div onClick={() => setView('wallet')} className="bg-green-50 text-green-700 px-4 py-1.5 rounded-2xl border border-green-100 flex items-center space-x-2 cursor-pointer active:scale-95 transition-all">
                             <Icon name="wallet" size={16} />
                             <span className="font-bold text-sm">€{balance.toFixed(2)}</span>
@@ -260,32 +255,32 @@
                         {view === 'landing' && (
                             <div className="space-y-6 animate-in fade-in">
                                 <div className="bg-indigo-600 p-8 rounded-[2.5rem] text-white shadow-xl relative overflow-hidden">
-                                    <h2 className="text-2xl font-black mb-2">Swipe & Bespaar. 🍿</h2>
-                                    <p className="text-indigo-100 text-sm mb-6">Beslis samen wat jullie gaan doen en spaar voor korting.</p>
+                                    <h2 className="text-2xl font-black mb-2 leading-tight uppercase">Swipe & Save. 🍿</h2>
+                                    <p className="text-indigo-100 text-sm mb-6">Beslis samen wat jullie gaan doen en spaar direct voor korting op je eten.</p>
                                     <div className="grid grid-cols-2 gap-4">
-                                        <button onClick={() => handleCreateRoom('food')} className="bg-white/20 p-5 rounded-2xl flex flex-col items-center font-bold active:scale-95 transition-transform hover:bg-white/30 vibe-card">
+                                        <button onClick={() => handleCreateRoom('food')} className="bg-white/20 p-5 rounded-2xl flex flex-col items-center font-bold active:scale-95 transition-transform vibe-card">
                                             <Icon name="utensils" className="mb-2" />
                                             Eten
                                         </button>
-                                        <button onClick={() => handleCreateRoom('movies')} className="bg-white/20 p-5 rounded-2xl flex flex-col items-center font-bold active:scale-95 transition-transform hover:bg-white/30 vibe-card">
+                                        <button onClick={() => handleCreateRoom('movies')} className="bg-white/20 p-5 rounded-2xl flex flex-col items-center font-bold active:scale-95 transition-transform vibe-card">
                                             {isLoadingData ? <Icon name="loader" className="animate-spin mb-2" /> : <Icon name="film" className="mb-2" />}
                                             Films
                                         </button>
                                     </div>
                                 </div>
 
-                                <div onClick={() => setView('wallet')} className="bg-white p-5 rounded-[2rem] border border-slate-100 flex items-center justify-between shadow-sm cursor-pointer hover:border-indigo-200 transition-colors group">
+                                <div onClick={() => setView('wallet')} className="bg-white p-6 rounded-[2rem] border border-slate-100 flex items-center justify-between shadow-sm cursor-pointer hover:border-indigo-200 transition-colors group">
                                     <div className="flex items-center space-x-4">
                                         <div className="bg-indigo-50 p-3 rounded-2xl text-indigo-600 group-hover:scale-110 transition-transform">
                                             <Icon name="coins" size={24} />
                                         </div>
-                                        <div>
-                                            <h3 className="font-bold text-sm">Snel saldo sparen?</h3>
-                                            <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest leading-none">Bekijk een video ad</p>
+                                        <div className="text-left">
+                                            <h3 className="font-bold text-sm">Portemonnee spekken?</h3>
+                                            <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest leading-none">Bekijk advertenties voor saldo</p>
                                         </div>
                                     </div>
-                                    <div className="bg-indigo-600 text-white p-3 rounded-2xl shadow-lg shadow-indigo-100 group-active:scale-90 transition-all">
-                                        <Icon name="arrow" size={20} strokeWidth={3} />
+                                    <div className="bg-indigo-600 text-white p-2 rounded-xl shadow-lg group-active:scale-90 transition-all">
+                                        <Icon name="chevronRight" size={20} strokeWidth={3} />
                                     </div>
                                 </div>
 
@@ -295,7 +290,7 @@
                                         <input 
                                             type="text" 
                                             placeholder="VOER CODE IN" 
-                                            className="flex-1 bg-white border-2 border-slate-100 rounded-2xl p-4 font-mono font-bold text-center outline-none focus:border-indigo-500 transition-all"
+                                            className="flex-1 bg-white border-2 border-slate-100 rounded-2xl p-4 font-mono font-bold text-center outline-none focus:border-indigo-500 transition-all uppercase"
                                             onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
                                         />
                                         <button onClick={() => handleJoinRoom(roomCode)} className="bg-slate-900 text-white px-6 rounded-2xl font-bold active:scale-95">JOIN</button>
@@ -307,11 +302,11 @@
                         {view === 'lobby' && (
                             <div className="flex flex-col items-center py-10 space-y-8 animate-in slide-in-from-bottom">
                                 <h2 className="text-3xl font-black">De Lobby</h2>
-                                <div className="bg-indigo-50 px-8 py-5 rounded-[2.5rem] border-2 border-dashed border-indigo-200">
+                                <div className="bg-indigo-50 px-8 py-5 rounded-[2.5rem] border-2 border-dashed border-indigo-200 text-center relative">
                                     <p className="text-4xl font-mono font-black text-indigo-600 tracking-widest">{roomCode}</p>
                                 </div>
                                 <p className="text-center text-slate-500 text-sm">Wacht op je vrienden om te beginnen.</p>
-                                <button onClick={() => setView('swiping')} className="w-full bg-indigo-600 text-white py-5 rounded-[2rem] text-xl font-bold shadow-xl shadow-indigo-100 active:scale-95 transition-all">START SWIPEN</button>
+                                <button onClick={() => setView('swiping')} className="w-full bg-indigo-600 text-white py-5 rounded-[2.5rem] text-xl font-bold shadow-xl active:scale-95 transition-all">START SWIPEN</button>
                             </div>
                         )}
 
@@ -334,7 +329,7 @@
                         {view === 'match' && roomData && (
                             <div className="text-center space-y-8 py-10 animate-in zoom-in">
                                 <Icon name="award" size={64} className="mx-auto text-yellow-500 animate-bounce" />
-                                <h2 className="text-5xl font-black italic tracking-tighter text-indigo-600">MATCH!</h2>
+                                <h2 className="text-5xl font-black italic tracking-tighter text-indigo-600 leading-none">MATCH!</h2>
                                 <div className="bg-white rounded-[2.5rem] shadow-2xl border-4 border-yellow-400 overflow-hidden transform rotate-2 mx-2">
                                     {(() => {
                                         const votes = roomData.votes || {};
@@ -345,7 +340,7 @@
                                                 <img src={item.img} className="h-56 w-full object-cover" alt="Matched" />
                                                 <div className="p-6">
                                                     <h3 className="text-2xl font-black mb-4">{item.name}</h3>
-                                                    <button className="w-full bg-green-500 text-white py-4 rounded-2xl font-black shadow-lg">KORTING PAKKEN</button>
+                                                    <button className="w-full bg-green-500 text-white py-4 rounded-2xl font-black shadow-lg uppercase">Korting Pakken</button>
                                                 </div>
                                             </>
                                         );
@@ -362,7 +357,7 @@
                                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Actueel Saldo</p>
                                     <h2 className="text-5xl font-black text-slate-900">€{balance.toFixed(2)}</h2>
                                     {balance < 5 && (
-                                        <div className="mt-4">
+                                        <div className="mt-4 px-4">
                                             <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
                                                 <div className="h-full bg-green-500 transition-all duration-700" style={{width: `${Math.min((balance/5)*100, 100)}%`}}></div>
                                             </div>
@@ -371,28 +366,28 @@
                                     )}
                                 </div>
                                 <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between">
-                                    <div className="flex items-center space-x-3">
+                                    <div className="flex items-center space-x-3 text-left">
                                         {isAnonymous ? <Icon name="lock" className="text-orange-400" size={20}/> : <Icon name="shield" className="text-green-500" size={20}/>}
                                         <div>
-                                            <h4 className="text-sm font-bold">{isAnonymous ? "Gast Account" : "Geverifieerd"}</h4>
-                                            <p className="text-[9px] text-slate-400 leading-none">Koppel Google om je saldo te borgen.</p>
+                                            <h4 className="text-sm font-bold leading-tight">{isAnonymous ? "Gast Account" : "Beveiligd"}</h4>
+                                            <p className="text-[9px] text-slate-400 leading-none">Koppel Google om nooit saldo te verliezen.</p>
                                         </div>
                                     </div>
-                                    {isAnonymous && <button onClick={handleSecureAccount} className="bg-indigo-600 text-white px-4 py-2 rounded-xl text-xs font-black active:scale-90 transition-transform">KOPPEL</button>}
+                                    {isAnonymous && <button onClick={handleSecureAccount} className="bg-indigo-600 text-white px-4 py-2 rounded-xl text-xs font-black active:scale-90 transition-transform shadow-md">KOPPEL</button>}
                                 </div>
-                                <button onClick={handleWatchAd} disabled={isWatchingAd} className="w-full bg-slate-900 text-white p-5 rounded-[2rem] font-black shadow-xl disabled:opacity-50 active:scale-95 transition-transform flex items-center justify-center">
+                                <button onClick={handleWatchAd} disabled={isWatchingAd} className="w-full bg-slate-900 text-white p-5 rounded-[2.5rem] font-black shadow-xl disabled:opacity-50 active:scale-95 transition-transform flex items-center justify-center">
                                     <Icon name="play" size={18} className="mr-2" />
                                     {isWatchingAd ? 'Video speelt af...' : 'Kijk Video (+ €0,15)'}
                                 </button>
-                                <button onClick={handleClaimVoucher} disabled={balance < 5} className={`w-full p-5 rounded-[2rem] font-black border-2 transition-all flex items-center justify-center ${balance >= 5 ? 'bg-green-500 text-white border-green-500 shadow-xl active:scale-95' : 'bg-white text-slate-200 border-slate-100'}`}>
+                                <button onClick={handleClaimVoucher} disabled={balance < 5} className={`w-full p-5 rounded-[2.5rem] font-black border-2 transition-all flex items-center justify-center ${balance >= 5 ? 'bg-green-500 text-white border-green-500 shadow-xl active:scale-95' : 'bg-white text-slate-200 border-slate-100'}`}>
                                     <Icon name="ticket" size={18} className="mr-2" />
                                     Claim €5 Voucher
                                 </button>
                                 <div className="space-y-2">
-                                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">Eerder geclaimd</h3>
+                                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2 text-left">Eerder geclaimd</h3>
                                     {vouchers.map((code, i) => (
                                         <div key={i} className="bg-white p-4 rounded-2xl border border-dashed border-slate-300 flex justify-between items-center animate-in fade-in">
-                                            <span className="font-mono font-bold text-indigo-600 tracking-wider">{code}</span>
+                                            <span className="font-mono font-bold text-indigo-600 tracking-wider uppercase">{code}</span>
                                             <span className="text-[10px] bg-green-100 text-green-700 px-2 py-1 rounded-lg font-black uppercase">Actief</span>
                                         </div>
                                     ))}
@@ -403,7 +398,7 @@
                         {view === 'voucher_success' && (
                             <div className="text-center space-y-8 py-10 animate-in zoom-in">
                                 <Icon name="check" size={64} className="mx-auto text-green-500" />
-                                <h2 className="text-3xl font-black">Code Gereed!</h2>
+                                <h2 className="text-3xl font-black tracking-tight uppercase italic">Code Gereed!</h2>
                                 <div className="bg-slate-900 text-white p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden">
                                     <p className="text-[10px] text-slate-400 uppercase mb-2 font-black tracking-[0.3em]">Jouw Voucher</p>
                                     <p className="text-4xl font-mono font-black text-yellow-400 tracking-widest uppercase select-all">{lastClaimedCode}</p>
@@ -413,7 +408,7 @@
                         )}
 
                         {view === 'info' && (
-                            <div className="space-y-6 animate-in slide-in-from-right">
+                            <div className="space-y-6 animate-in slide-in-from-right text-left">
                                 <h2 className="text-3xl font-black italic tracking-tighter leading-none">Hulp & Info</h2>
                                 <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
                                     <h3 className="font-black text-indigo-600 mb-2 uppercase text-xs tracking-wider">Privacy</h3>
@@ -424,7 +419,7 @@
                                     <p className="text-xs text-slate-500 leading-relaxed">Punten zijn virtueel en uitsluitend inwisselbaar voor vouchers bij partners. Misbruik van het advertentiesysteem leidt tot uitsluiting.</p>
                                 </div>
                                 <div onClick={() => alert("Wissen bevestigen in instellingen...")} className="bg-red-50 p-6 rounded-3xl border border-red-100 flex justify-between items-center cursor-pointer active:scale-95 transition-transform">
-                                    <span className="text-red-700 font-bold text-sm">Account & Data Wissen</span>
+                                    <span className="text-red-700 font-bold text-sm uppercase">Account & Data Wissen</span>
                                     <Icon name="trash" size={20} className="text-red-400" />
                                 </div>
                             </div>
@@ -433,7 +428,7 @@
                         {view === 'waiting' && (
                             <div className="flex flex-col items-center justify-center py-20 text-center space-y-6 animate-pulse">
                                 <Icon name="users" size={64} className="text-indigo-200" />
-                                <h2 className="text-2xl font-black px-10">Wachten op de rest...</h2>
+                                <h2 className="text-2xl font-black px-10 leading-tight uppercase">Wachten op de rest...</h2>
                                 <p className="text-slate-400 text-sm px-10">Zodra iedereen zijn swipes heeft gedaan, verschijnt de match hier automatisch!</p>
                             </div>
                         )}
@@ -457,7 +452,7 @@
                     {isWatchingAd && (
                         <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-sm flex flex-col items-center justify-center text-white p-10 animate-in fade-in">
                             <div className="mb-4 text-6xl animate-bounce">🎬</div>
-                            <p className="text-xl font-bold text-center">Video Advertentie</p>
+                            <p className="text-xl font-bold text-center uppercase tracking-tighter">Video Advertentie</p>
                             <p className="text-indigo-400 text-sm font-normal italic mt-2 text-center">Bedankt voor het wachten. Je saldo wordt direct bijgewerkt.</p>
                             <div className="w-48 h-1 bg-white/10 rounded-full mt-12 overflow-hidden">
                                 <div className="h-full bg-indigo-500 animate-loading"></div>
